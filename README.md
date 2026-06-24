@@ -2,6 +2,8 @@
 
 An AI-powered candidate screening workflow built with **LangGraph**. The system processes a batch of resumes, evaluates each candidate across multiple dimensions, generates recruiter-friendly summaries, performs self-review for quality assurance, and exports the final results.
 
+> **Note:** `candidates.csv` is a sample dataset provided for testing the AI Candidate Screening workflow. Replace it with your own data as needed.
+
 ---
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python)
 ![LangGraph](https://img.shields.io/badge/LangGraph-Workflow-orange)
