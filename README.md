@@ -9,7 +9,8 @@ An AI-powered candidate screening workflow built with **LangGraph**. The system 
 ![Pydantic](https://img.shields.io/badge/Pydantic-Validation-E92063)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)
 ![License](https://img.shields.io/badge/License-MIT-green)
-[![Docker Pulls](https://img.shields.io/docker/pulls/omikalix/ai-candidate-screening)](https://hub.docker.com/repository/docker/omikalix/ai-candidate-screening)[![Docker Image Size](https://img.shields.io/docker/image-size/omikalix/ai-candidate-screening/latest?style=flat-square&logo=docker&label=Image%20Size)](https://hub.docker.com/repository/docker/omikalix/ai-candidate-screening)
+[![Docker Pulls](https://img.shields.io/docker/pulls/omikalix/ai-candidate-screening)](https://hub.docker.com/repository/docker/omikalix/ai-candidate-screening)
+[![Docker Image Size](https://img.shields.io/docker/image-size/omikalix/ai-candidate-screening/latest?style=flat-square&logo=docker&label=Image%20Size)](https://hub.docker.com/repository/docker/omikalix/ai-candidate-screening)
 
 # Running the Project
 
