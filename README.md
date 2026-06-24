@@ -1,34 +1,35 @@
 # AI Candidate Screening System using LangGraph
 
-An AI-powered candidate screening workflow built with LangGraph. The system processes a batch of resumes, evaluates each candidate across multiple dimensions, generates recruiter-friendly summaries, performs self-review for quality assurance, and exports the final results.
+An AI-powered candidate screening workflow built with **LangGraph**. The system processes a batch of resumes, evaluates each candidate across multiple dimensions, generates recruiter-friendly summaries, performs self-review for quality assurance, and exports the final results.
 
 ---
 
 # Running the Project
 
-## 1. Install dependencies
+## Option 1: Run Locally
+
+### 1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 2. Start Ollama
-
-Make sure Ollama is installed, then start the Ollama server:
+### 2. Start Ollama
 
 ```bash
 ollama serve
 ```
 
-In a separate terminal, pull the required model (if you haven't already):
+Pull the required model:
 
 ```bash
 ollama pull qwen2.5:7b
+#any model you want.
 ```
 
-> Replace `qwen2.5:7b` with the model your project uses if it's different.
+> Replace `qwen2.5:7b` if your project uses another model.
 
-## 3. Run the application
+### 3. Run the application
 
 ```bash
 python app.py
@@ -36,9 +37,51 @@ python app.py
 
 ---
 
+## Option 2: Run with Docker
+
+### 1. Pull the Docker image
+
+```bash
+docker pull omikalix/ai-candidate-screening
+```
+
+### 2. Start Ollama
+
+```bash
+ollama serve
+```
+
+### 3. Pull the model
+
+```bash
+ollama pull qwen2.5:7b
+
+#any model you want.
+```
+
+### 4. Run the container
+
+```bash
+docker run -p 8501:8501 omikalix/ai-candidate-screening
+```
+
+> **Note:** Keep the Ollama server running on your host machine before starting the Docker container.
+
+---
+
+# Tech Stack
+
+* LangGraph
+* LangChain
+* Ollama
+* Qwen2.5
+* Python
+* Pandas
+* Docker
+
 # Project Workflow
 
-```
+```text
 Start
    │
    ▼
@@ -93,201 +136,179 @@ Save Result
 
 Loads the complete candidate dataset from the CSV file.
 
-This node is separated because batch loading happens only once before processing individual candidates.
+This node runs only once before processing individual candidates.
 
 ---
 
 ## 2. initialize_candidate
 
-Selects the next candidate from the batch and initializes the workflow state for that candidate.
+Initializes the workflow state for the next candidate.
 
-Keeping this as a separate node makes it easy to iterate over multiple candidates without restarting the graph.
+Separating this node makes batch processing simple and scalable.
 
 ---
 
 ## 3. preprocess
 
-Cleans and standardizes resume data before evaluation.
+Prepares the resume for evaluation.
 
-Responsibilities include:
+Responsibilities:
 
-- Normalizing text
-- Removing unnecessary whitespace
-- Preparing structured input for downstream evaluation
-
-Separating preprocessing ensures every evaluator receives consistent input.
+* Normalize text
+* Remove unnecessary whitespace
+* Standardize input
 
 ---
 
 ## 4. feature_extraction
 
-Extracts relevant information from the resume.
+Extracts structured candidate information.
 
 Examples:
 
-- Skills
-- Experience
-- Education
-- Projects
-- Certifications
-
-This node isolates information extraction from scoring logic.
+* Skills
+* Experience
+* Education
+* Projects
+* Certifications
 
 ---
 
 ## 5. technical_match
 
-Evaluates the candidate's technical skills against the required job skills.
+Evaluates technical skills against job requirements.
 
 Produces:
 
-- Technical feedback
-- Technical score
-
-Keeping technical evaluation independent makes it reusable for different roles.
+* Technical score
+* Technical feedback
 
 ---
 
 ## 6. seniority_match
 
-Determines whether the candidate's experience level matches the job requirements.
-
 Evaluates:
 
-- Years of experience
-- Role progression
-- Leadership experience
+* Years of experience
+* Career progression
+* Leadership experience
 
 Produces:
 
-- Seniority feedback
-- Seniority score
+* Seniority score
+* Seniority feedback
 
 ---
 
 ## 7. culture_match
 
-Evaluates non-technical qualities such as:
+Evaluates:
 
-- Communication
-- Teamwork
-- Adaptability
-- Learning mindset
+* Communication
+* Teamwork
+* Adaptability
+* Learning mindset
 
 Produces:
 
-- Culture feedback
-- Culture score
-
-Keeping this separate prevents mixing technical and behavioral evaluation.
+* Culture score
+* Culture feedback
 
 ---
 
 ## 8. aggregate_score
 
-Combines all evaluation scores into a final candidate score.
+Combines all evaluation scores.
 
-Calculates:
+Produces:
 
-- Overall score
-- Overall recommendation
-
-This node acts as the central scoring component.
+* Final score
+* Overall recommendation
 
 ---
 
 ## 9. recruiter_summary
 
-Generates a recruiter-friendly summary describing:
+Generates a recruiter-friendly summary including:
 
-- Overall fit
-- Key strengths
-- Major weaknesses
-- Hiring recommendation
-
-This separates evaluation from presentation.
+* Overall fit
+* Strengths
+* Weaknesses
+* Hiring recommendation
 
 ---
 
 ## 10. self_review
 
-Reviews the generated summary before saving the result.
+Acts as the quality assurance layer.
 
-Checks include:
+Checks:
 
-- Missing information
-- Contradictory statements
-- Hallucinated information
-- Score consistency
-- Recommendation consistency
-- Formatting quality
+* Missing information
+* Hallucinated claims
+* Contradictions
+* Score consistency
+* Recommendation consistency
+* Formatting quality
 
-If an issue is detected, the node regenerates or corrects the summary before continuing.
-
-This improves reliability without affecting earlier evaluation nodes.
+If any issue is detected, the summary is regenerated before continuing.
 
 ---
 
 ## 11. save_result
 
-Stores the evaluated candidate into the final results list.
-
-Keeping persistence separate makes exporting easier.
+Stores the evaluated candidate.
 
 ---
 
 ## 12. next_candidate
 
-Determines whether more candidates remain in the batch.
+Checks whether additional candidates remain.
 
-If candidates remain:
+If yes:
 
-Returns to
-
-```
+```text
 initialize_candidate
 ```
 
-Otherwise proceeds to export.
+Otherwise:
+
+```text
+export_csv
+```
 
 ---
 
 ## 13. export_csv
 
-Exports all processed candidates into a CSV file.
+Exports all evaluated candidates into a CSV file.
 
-This node executes only once after every candidate has been processed.
+Runs only once after the entire batch has been processed.
 
 ---
 
 # Conditional Edges
 
-The workflow contains two conditional branches.
-
 ## Candidate Loop
 
-After saving a candidate:
-
-If additional candidates exist
-
-```
+```text
 save_result
-        │
-        ▼
+      │
+      ▼
 next_candidate
-        │
-        ├── More Candidates
-        │
-        ▼
+      │
+      ├── More Candidates
+      │
+      ▼
 initialize_candidate
 ```
 
 Otherwise
 
-```
+```text
 save_result
-        │
-        ▼
+      │
+      ▼
 export_csv
 ```
 
@@ -295,40 +316,36 @@ export_csv
 
 ## Self Review
 
-The self-review node validates the generated recruiter summary.
+If validation succeeds:
 
-If the summary passes all validation checks
-
-```
+```text
 Self Review
       │
       ▼
 Save Result
 ```
 
-If problems are detected
+Otherwise:
 
-- Missing information
-- Contradictions
-- Unsupported claims
-- Inconsistent recommendation
+* Missing information
+* Unsupported claims
+* Contradictions
+* Recommendation mismatch
 
-The summary is regenerated before continuing.
+The summary is regenerated before saving.
 
 ---
 
 # Self Evaluation
 
-The self-evaluation stage acts as a quality control layer.
+The Self-Review stage verifies:
 
-It verifies:
-
-- Summary matches evaluation scores
-- No fabricated information
-- Recommendation aligns with scores
-- Output is complete
-- Output is readable
-- No contradictory statements
+* Summary matches evaluation scores
+* Recommendation aligns with scores
+* No fabricated information
+* No contradictions
+* Complete output
+* Readable recruiter summary
 
 Only validated summaries are saved.
 
@@ -336,35 +353,33 @@ Only validated summaries are saved.
 
 # Tradeoffs
 
-Several design tradeoffs were made during development.
+Design decisions made during development:
 
-- Multiple specialized nodes were preferred over a single large evaluation node to improve modularity and maintainability.
-- LLM evaluations provide richer reasoning but increase latency.
-- Sequential evaluation improves interpretability at the expense of execution speed.
-- Self-review adds additional model calls but significantly improves output quality.
+* Modular nodes instead of one large LLM prompt for maintainability.
+* Sequential execution improves explainability but increases latency.
+* LLM reasoning provides richer evaluations than rule-based scoring.
+* Self-review adds one additional model call but significantly improves reliability.
 
 ---
 
 # Future Improvements
 
-With additional time, the following improvements would be implemented:
-
-- Parallel execution of independent evaluation nodes
-- Resume embedding and semantic retrieval
-- Job description matching
-- ATS compatibility scoring
-- Human-in-the-loop review
-- Multi-model evaluation
-- Interactive dashboard
-- Database integration
-- REST API deployment
-- Streamlit interface
-- PDF report generation
+* Parallel execution of independent nodes
+* Resume embeddings with semantic retrieval
+* Job description matching
+* ATS compatibility scoring
+* Human-in-the-loop review
+* Multi-model evaluation
+* Interactive dashboard
+* Database integration
+* REST API deployment
+* Streamlit interface
+* PDF report generation
 
 ---
 
 ## Author
 
-© 2025 OMI-KALIX
+**OMI-KALIX**
 
----
+© 2025
